@@ -9,6 +9,6 @@ cdef class HelloWorldStrategy(StrategyBase):
         dict _market_infos
         bint _all_markets_ready
         bint _place_orders
-        str market_symbol
+        str _market_symbol
 
         int64_t _logging_options

@@ -17,7 +17,7 @@ hello_world_config_map = {
                         prompt="Enter the name of the exchange >>> ",
                         validator=is_exchange,
                         on_validated=lambda value: required_exchanges.append(value)),
-    "market_symbol": ConfigVar(key="market_symbol",
-                               prompt=symbol_prompt,
-                               type_str="str"),
+    "asset_symbol": ConfigVar(key="asset_symbol",
+                              prompt=symbol_prompt,
+                              type_str="str"),
 }

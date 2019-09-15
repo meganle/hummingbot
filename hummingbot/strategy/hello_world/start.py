@@ -14,7 +14,7 @@ from hummingbot.strategy.hello_world.hello_world_config_map import hello_world_c
 def start(self):
     try:
         market = hello_world_config_map.get("market").value.lower()
-        market_symbol = hello_world_config_map.get("market_symbol").value
+        asset_symbol = hello_world_config_map.get("asset_symbol").value
         raw_market_symbol = EXAMPLE_PAIRS.get(market)
 
         try:
@@ -35,7 +35,7 @@ def start(self):
         strategy_logging_options = HelloWorldStrategy.OPTION_LOG_ALL
 
         self.strategy = HelloWorldStrategy(market_infos=[MarketSymbolPair(*maker_data)],
-                                           market_symbol=market_symbol,
+                                           asset_symbol=asset_symbol,
                                            logging_options=strategy_logging_options)
     except Exception as e:
         self._notify(str(e))

@@ -24,4 +24,3 @@ cdef class PerformTradeStrategy(StrategyBase):
         cdef c_process_market(self, object market_info)
         cdef c_place_order(self, object market_info)
         cdef c_has_enough_balance(self, object market_info)
-        cdef c_process_market(self, object market_info)
