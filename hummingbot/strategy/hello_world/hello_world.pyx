@@ -51,6 +51,7 @@ cdef class HelloWorldStrategy(StrategyBase):
 
     def __init__(self,
                  market_infos: List[MarketSymbolPair],
+                 market_symbol: str,
                  logging_options: int = OPTION_LOG_ALL):
 
         if len(market_infos) < 1:
@@ -64,6 +65,7 @@ cdef class HelloWorldStrategy(StrategyBase):
         self._all_markets_ready = False
         self._place_orders = True
         self._logging_options = logging_options
+        self.market_symbol = market_symbol
 
         cdef:
             set all_markets = set([market_info.market for market_info in market_infos])
@@ -117,16 +119,10 @@ cdef class HelloWorldStrategy(StrategyBase):
             list active_orders = []
 
         for market_info in self._market_infos.values():
-            active_orders = self.market_info_to_active_orders.get(market_info, [])
-
             warning_lines.extend(self.network_warning([market_info]))
 
-            assets_df = self.wallet_balance_data_frame([market_info])
-            # lines.extend(["", "  Assets:"] + ["    " + line for line in str(assets_df).split("\n")])
-            base_asset_amt = str(market_info.market.get_balance(market_info.base_asset))
-            quote_asset_amt = str(market_info.market.get_balance(market_info.quote_asset))
-            lines.extend(["", "  Assets:"] + ["    " + base_asset_amt + "    " + market_info.base_asset] +
-                         ["    " + quote_asset_amt + "  " + market_info.quote_asset])
+            asset_amt = market_info.market.get_balance(self.market_symbol)
+            lines.extend(["", "  Assets:"] + ["    " + str(asset_amt) + "    " + self.market_symbol])
 
         if len(warning_lines) > 0:
             lines.extend(["", "*** WARNINGS ***"] + warning_lines)

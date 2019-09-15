@@ -3,6 +3,7 @@ from typing import (
     Tuple,
 )
 
+from hummingbot.client.settings import EXAMPLE_PAIRS
 from hummingbot.strategy.market_symbol_pair import MarketSymbolPair
 from hummingbot.strategy.hello_world import (
     HelloWorldStrategy
@@ -13,7 +14,8 @@ from hummingbot.strategy.hello_world.hello_world_config_map import hello_world_c
 def start(self):
     try:
         market = hello_world_config_map.get("market").value.lower()
-        raw_market_symbol = hello_world_config_map.get("market_symbol_pair").value
+        market_symbol = hello_world_config_map.get("market_symbol").value
+        raw_market_symbol = EXAMPLE_PAIRS.get(market)
 
         try:
             assets: Tuple[str, str] = self._initialize_market_assets(market, [raw_market_symbol])[0]
@@ -33,6 +35,7 @@ def start(self):
         strategy_logging_options = HelloWorldStrategy.OPTION_LOG_ALL
 
         self.strategy = HelloWorldStrategy(market_infos=[MarketSymbolPair(*maker_data)],
+                                           market_symbol=market_symbol,
                                            logging_options=strategy_logging_options)
     except Exception as e:
         self._notify(str(e))

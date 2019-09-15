@@ -133,9 +133,11 @@ cdef class PerformTradeStrategy(StrategyBase):
             warning_lines.extend(self.network_warning([market_info]))
 
             markets_df = self.market_status_data_frame([market_info])
+            markets_df = markets_df.drop(columns=["Adjusted Bid", "Adjusted Ask"])
             lines.extend(["", "  Markets:"] + ["    " + line for line in str(markets_df).split("\n")])
 
             assets_df = self.wallet_balance_data_frame([market_info])
+            assets_df = assets_df.drop(columns=["Conversion Rate"])
             lines.extend(["", "  Assets:"] + ["    " + line for line in str(assets_df).split("\n")])
 
             # See if there're any open orders.
@@ -156,7 +158,31 @@ cdef class PerformTradeStrategy(StrategyBase):
 
     cdef c_start(self, Clock clock, double timestamp):
         StrategyBase.c_start(self, clock, timestamp)
-        self.logger().info("Starting perform_trade strategy")
+
+    cdef c_tick(self, double timestamp):
+        StrategyBase.c_tick(self, timestamp)
+        cdef:
+            bint should_report_warnings = self._logging_options & self.OPTION_LOG_STATUS_REPORT
+            list active_maker_orders = self.active_maker_orders
+
+        try:
+            if not self._all_markets_ready:
+                self._all_markets_ready = all([market.ready for market in self._sb_markets])
+                if not self._all_markets_ready:
+                    # Markets not ready yet. Don't do anything.
+                    if should_report_warnings:
+                        self.logger().warning(f"Markets are not ready. No market making trades are permitted.")
+                    return
+
+            if should_report_warnings:
+                if not all([market.network_status is NetworkStatus.CONNECTED for market in self._sb_markets]):
+                    self.logger().warning(f"WARNING: Some markets are not connected or are down at the moment. Market "
+                                          f"making may be dangerous when markets or networks are unstable.")
+
+            for market_info in self._market_infos.values():
+                self.c_process_market(market_info)
+        finally:
+            return
 
     cdef c_place_order(self, object market_info):
         cdef:
@@ -204,3 +230,11 @@ cdef class PerformTradeStrategy(StrategyBase):
             double price = order_book.c_get_price_for_volume(True, self._order_amount).result_price
 
         return quote_asset_balance >= self._order_amount * price if self._is_buy else base_asset_balance >= self._order_amount
+
+    cdef c_process_market(self, object market_info):
+        cdef:
+            MarketBase maker_market = market_info.market
+
+        if self._place_orders:
+            self._place_orders = False
+            self.c_place_order(market_info)
